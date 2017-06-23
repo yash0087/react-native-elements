@@ -27,6 +27,7 @@ import Tile from './tile/Tile';
 import Slider from './slider/Slider';
 import Avatar from './avatar/Avatar';
 import Rating from './rating/Rating';
+import VerticalRating from './rating/VerticalRating';
 import SwipeDeck from './swipedeck/SwipeDeck';
 import Header from './header/Header';
 
@@ -60,6 +61,7 @@ const Elements = {
   Slider,
   Avatar,
   Rating,
+  VerticalRating,
   SwipeDeck,
   Header,
 };
