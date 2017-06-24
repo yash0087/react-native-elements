@@ -56,7 +56,7 @@ export default class Rating extends Component {
   constructor(props) {
     super(props);
 
-    const { onFinishRating, fractions } = this.props;
+    const { onFinishRating, fractions, vertical } = this.props;
 
     const position = new Animated.ValueXY();
 
@@ -64,8 +64,13 @@ export default class Rating extends Component {
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (event, gesture) => {
         const newPosition = new Animated.ValueXY();
-        newPosition.setValue({ x: gesture.dx, y: 0 });
-        this.setState({ position: newPosition, value: gesture.dx });
+        if (vertical) {
+          newPosition.setValue({ x: 0, y: gesture.dy });
+          this.setState({ position: newPosition, value: gesture.dy });
+        } else {
+          newPosition.setValue({ x: gesture.dx, y: 0 });
+          this.setState({ position: newPosition, value: gesture.dx });
+        }
       },
       onPanResponderRelease: event => {
         const rating = this.getCurrentRating();
@@ -86,11 +91,11 @@ export default class Rating extends Component {
 
   getPrimaryViewStyle() {
     const { position } = this.state;
-    const { imageSize, ratingCount, type } = this.props;
+    const { imageSize, ratingCount, ratingColor, vertical } = this.props;
 
-    const color = TYPES[type].color;
+    const positionValue = vertical ? position.y : position.x;
 
-    const width = position.x.interpolate(
+    let value = positionValue.interpolate(
       {
         inputRange: [
           -ratingCount * (imageSize / 2),
@@ -103,20 +108,25 @@ export default class Rating extends Component {
       { useNativeDriver: true }
     );
 
-    return {
-      backgroundColor: color,
-      width,
-      height: width ? imageSize : 0,
-    };
+    const primaryViewStyle = { backgroundColor: ratingColor };
+    primaryViewStyle.width = !vertical ? value : value ? imageSize : 0;
+    primaryViewStyle.height = vertical ? value : value ? imageSize : 0;
+
+    return primaryViewStyle;
   }
 
   getSecondaryViewStyle() {
     const { position } = this.state;
-    const { imageSize, ratingCount, type } = this.props;
+    const {
+      imageSize,
+      ratingCount,
+      ratingBackgroundColor,
+      vertical,
+    } = this.props;
 
-    const backgroundColor = TYPES[type].backgroundColor;
+    const positionValue = vertical ? position.y : position.x;
 
-    const width = position.x.interpolate(
+    const value = positionValue.interpolate(
       {
         inputRange: [
           -ratingCount * (imageSize / 2),
@@ -129,21 +139,20 @@ export default class Rating extends Component {
       { useNativeDriver: true }
     );
 
-    return {
-      backgroundColor,
-      width,
-      height: width ? imageSize : 0,
-    };
+    const secondaryViewStyle = { backgroundColor: ratingBackgroundColor };
+    secondaryViewStyle.width = !vertical ? value : value ? imageSize : 0;
+    secondaryViewStyle.height = vertical ? value : value ? imageSize : 0;
+
+    return secondaryViewStyle;
   }
 
   renderRatings() {
-    const { imageSize, ratingCount, type } = this.props;
-    const source = TYPES[type].source;
+    const { imageSize, ratingCount, ratingImage } = this.props;
 
     return times(ratingCount, index =>
       <View key={index} style={styles.starContainer}>
         <Image
-          source={source}
+          source={ratingImage}
           style={{ width: imageSize, height: imageSize }}
         />
       </View>
@@ -175,7 +184,7 @@ export default class Rating extends Component {
   }
 
   setCurrentRating(rating) {
-    const { imageSize, ratingCount } = this.props;
+    const { imageSize, ratingCount, vertical } = this.props;
     // `initialRating` corresponds to `startingValue` in the getter. Naming it
     // differently here avoids confusion with `value` below.
     const initialRating = ratingCount / 2;
@@ -191,19 +200,26 @@ export default class Rating extends Component {
       value = 0;
     }
 
+    let newValue = {};
+    newValue.x = vertical ? 0 : value;
+    newValue.y = vertical ? value : 0;
+
     const newPosition = new Animated.ValueXY();
-    newPosition.setValue({ x: value, y: 0 });
+    newPosition.setValue(newValue);
+
     this.setState({ position: newPosition, value });
   }
 
   displayCurrentRating() {
-    const { ratingCount, type, readonly } = this.props;
+    const { ratingCount, readonly, ratingColor, vertical } = this.props;
 
-    const color = TYPES[type].color;
+    const color = ratingColor;
 
     return (
-      <View style={styles.showRatingView}>
-        <View style={styles.ratingView}>
+      <View
+        style={vertical ? styles.showRatingViewVertical : styles.showRatingView}
+      >
+        <View style={vertical ? styles.ratingViewVertical : styles.ratingView}>
           <Text style={styles.ratingText}>Rating: </Text>
           <Text style={[styles.currentRatingText, { color }]}>
             {this.getCurrentRating()}
@@ -226,6 +242,7 @@ export default class Rating extends Component {
       ratingBackgroundColor,
       style,
       showRating,
+      vertical,
     } = this.props;
 
     if (type === 'custom') {
@@ -241,10 +258,16 @@ export default class Rating extends Component {
       <View pointerEvents={readonly ? 'none' : 'auto'} style={style}>
         {showRating && this.displayCurrentRating()}
         <View
-          style={styles.starsWrapper}
+          style={vertical ? styles.starsWrapperVertical : styles.starsWrapper}
           {...this.state.panResponder.panHandlers}
         >
-          <View style={styles.starsInsideWrapper}>
+          <View
+            style={
+              vertical
+                ? styles.starsInsideWrapperVertical
+                : styles.starsInsideWrapper
+            }
+          >
             <Animated.View style={this.getPrimaryViewStyle()} />
             <Animated.View style={this.getSecondaryViewStyle()} />
           </View>
@@ -259,11 +282,20 @@ const styles = StyleSheet.create({
   starsWrapper: {
     flexDirection: 'row',
   },
+  starsWrapperVertical: {
+    flexDirection: 'column',
+  },
   starsInsideWrapper: {
     position: 'absolute',
     top: 0,
     left: 0,
     flexDirection: 'row',
+  },
+  starsInsideWrapperVertical: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    flexDirection: 'column',
   },
   showRatingView: {
     flexDirection: 'column',
@@ -271,8 +303,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 5,
   },
+  showRatingViewVertical: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 5,
+  },
   ratingView: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 5,
+  },
+  ratingViewVertical: {
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 5,
@@ -330,6 +374,7 @@ Rating.propTypes = {
   imageSize: PropTypes.number,
   onFinishRating: PropTypes.func,
   showRating: PropTypes.bool,
+  vertical: PropTypes.bool,
   style: View.propTypes.style,
   readonly: PropTypes.bool,
   startingValue: PropTypes.number,
