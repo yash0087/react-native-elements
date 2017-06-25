@@ -50,6 +50,7 @@ export default class Rating extends Component {
     ratingBackgroundColor: 'white',
     ratingCount: 5,
     imageSize: STAR_WIDTH,
+    vertical: false,
     onFinishRating: () => console.log('Attach a function here.'),
   };
 
