@@ -24,37 +24,18 @@ class Ratings extends React.Component {
             onFinishRating={this.ratingCompleted}
             style={{ paddingVertical: 10 }}
           />
-          <Rating
+
+          {/*<Rating
             showRating
             type="star"
             fractions={1}
             startingValue={3.6}
             readonly
+            vertical
             imageSize={40}
             onFinishRating={this.ratingCompleted}
             style={{ paddingVertical: 10 }}
-          />
-          <Rating
-            type="custom"
-            ratingImage={WATER_IMAGE}
-            ratingColor="#3498db"
-            ratingBackgroundColor="#ceee"
-            ratingCount={10}
-            imageSize={30}
-            onFinishRating={this.ratingCompleted}
-            showRating
-            style={{ paddingVertical: 10 }}
-          />
-          <Rating
-            type="heart"
-            ratingCount={3}
-            fractions={2}
-            startingValue={1.57}
-            imageSize={40}
-            onFinishRating={this.ratingCompleted}
-            showRating
-            style={{ paddingVertical: 10 }}
-          />
+          />*/}
         </View>
       </View>
     );
